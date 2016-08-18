@@ -3,12 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"log"
 	"os"
 	"os/exec"
+
+	"github.com/codegangsta/cli"
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 // command line args
@@ -66,7 +67,10 @@ func main() {
 	os.Exit(1)
 }
 
-func gitClone(c *cli.Context) {
+func gitClone(c *cli.Context) error {
+
+	fmt.Printf("token %s\n", c.GlobalString(GitToken))
+	fmt.Printf("org %s\n", c.GlobalString(GitOrg))
 
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: c.GlobalString(GitToken)},
@@ -88,7 +92,7 @@ func gitClone(c *cli.Context) {
 
 		repos, resp, err := client.Repositories.ListByOrg(c.GlobalString(GitOrg), opt)
 		if err != nil {
-			log.Fatalln(err)
+			return err
 		}
 
 		for _, v := range repos {
@@ -100,15 +104,15 @@ func gitClone(c *cli.Context) {
 
 			if _, err := os.Stat(checkPath); os.IsNotExist(err) {
 
-				fmt.Printf("does not exist, cloning...\n")
+				fmt.Printf("does not exist, cloning [%s]\n", *v.CloneURL)
 
-				cmdArgs := []string{GitClone, *v.SSHURL}
+				cmdArgs := []string{GitClone, *v.CloneURL}
 
 				cmd := exec.Command(cmdName, cmdArgs...)
 				cmdReader, err := cmd.StdoutPipe()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error: creating StdoutPipe for Cmd", err)
-					os.Exit(1)
+					return err
 				}
 
 				scanner := bufio.NewScanner(cmdReader)
@@ -121,13 +125,13 @@ func gitClone(c *cli.Context) {
 				err = cmd.Start()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error: starting Cmd", err)
-					os.Exit(1)
+					return err
 				}
 
 				err = cmd.Wait()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error: waiting for Cmd", err)
-					os.Exit(1)
+					// return err
 				}
 
 			} else {
@@ -141,4 +145,5 @@ func gitClone(c *cli.Context) {
 
 		page = resp.NextPage
 	}
+	return nil
 }
