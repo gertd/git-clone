@@ -69,6 +69,10 @@ func main() {
 			Usage:  GitTokenUsage,
 			EnvVar: GitTokenEnv,
 		},
+		cli.BoolFlag{
+			Name:  Verbose,
+			Usage: VerboseUsage,
+		},
 	}
 
 	err := app.Run(os.Args)
@@ -87,8 +91,7 @@ func gitClone(c *cli.Context) error {
 	verbose := c.GlobalBool(Verbose)
 
 	if verbose {
-		fmt.Printf("user  %s\n", gitUser)
-		fmt.Printf("org   %s\n", gitOrg)
+		fmt.Printf("user: [%s] org: [%s]\n", gitUser, gitOrg)
 	}
 
 	userinfo := url.UserPassword(gitUser, gitToken)
