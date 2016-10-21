@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 
@@ -14,20 +15,25 @@ import (
 
 // command line args
 const (
+	GitUser  = "user"
 	GitOrg   = "org"
 	GitToken = "token"
+	Verbose  = "verbose"
 )
 
 // environment variables
 const (
+	GitUserEnv  = "GIT_USER"
 	GitOrgEnv   = "GIT_ORG"
 	GitTokenEnv = "GIT_TOKEN"
 )
 
 // command line usage
 const (
+	GitUserUsage  = "GitHub user id"
 	GitOrgUsage   = "GitHub organization"
 	GitTokenUsage = "GitHub private access token"
+	VerboseUsage  = "verbose output"
 )
 
 // command literals
@@ -45,6 +51,12 @@ func main() {
 	app.Usage = AppUsage
 	app.Action = gitClone
 	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:   GitUser,
+			Value:  "",
+			Usage:  GitUserUsage,
+			EnvVar: GitUserEnv,
+		},
 		cli.StringFlag{
 			Name:   GitOrg,
 			Value:  "",
@@ -69,11 +81,21 @@ func main() {
 
 func gitClone(c *cli.Context) error {
 
-	fmt.Printf("token %s\n", c.GlobalString(GitToken))
-	fmt.Printf("org %s\n", c.GlobalString(GitOrg))
+	gitToken := c.GlobalString(GitToken)
+	gitOrg := c.GlobalString(GitOrg)
+	gitUser := c.GlobalString(GitUser)
+	verbose := c.GlobalBool(Verbose)
 
+	if verbose {
+		fmt.Printf("user  %s\n", gitUser)
+		fmt.Printf("org   %s\n", gitOrg)
+	}
+
+	userinfo := url.UserPassword(gitUser, gitToken)
+
+	userinfo.Password()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: c.GlobalString(GitToken)},
+		&oauth2.Token{AccessToken: gitToken},
 	)
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 
@@ -83,30 +105,54 @@ func gitClone(c *cli.Context) error {
 
 	cmdName := GitCmd
 
+	var repos []*github.Repository
+	var resp *github.Response
+	var err error
+
 	for {
 
-		opt := &github.RepositoryListByOrgOptions{
-			Type:        "all",
-			ListOptions: github.ListOptions{PerPage: 10, Page: page},
+		if len(gitOrg) == 0 {
+
+			opt := &github.RepositoryListOptions{
+				Type:        "all",
+				ListOptions: github.ListOptions{PerPage: 10, Page: page},
+			}
+
+			repos, resp, err = client.Repositories.List(gitUser, opt)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			opt := &github.RepositoryListByOrgOptions{
+				Type:        "all",
+				ListOptions: github.ListOptions{PerPage: 10, Page: page},
+			}
+
+			repos, resp, err = client.Repositories.ListByOrg(c.GlobalString(GitOrg), opt)
+			if err != nil {
+				return err
+			}
 		}
 
-		repos, resp, err := client.Repositories.ListByOrg(c.GlobalString(GitOrg), opt)
-		if err != nil {
-			return err
-		}
+		for _, repo := range repos {
 
-		for _, v := range repos {
-
-			fmt.Printf("%s ", *v.FullName)
+			fmt.Printf("%s ", *repo.FullName)
 
 			// check if directory/.git exists
-			checkPath := "../" + *v.FullName + "/.git"
+			checkPath := "../" + *repo.FullName + "/.git"
 
 			if _, err := os.Stat(checkPath); os.IsNotExist(err) {
 
-				fmt.Printf("does not exist, cloning [%s]\n", *v.CloneURL)
+				fmt.Printf("does not exist, cloning [%s]\n", *repo.CloneURL)
 
-				cmdArgs := []string{GitClone, *v.CloneURL}
+				url, err := url.Parse(*repo.CloneURL)
+				if err != nil {
+					return err
+				}
+				url.User = userinfo
+
+				cmdArgs := []string{GitClone, url.String()}
 
 				cmd := exec.Command(cmdName, cmdArgs...)
 				cmdReader, err := cmd.StdoutPipe()
@@ -118,7 +164,7 @@ func gitClone(c *cli.Context) error {
 				scanner := bufio.NewScanner(cmdReader)
 				go func() {
 					for scanner.Scan() {
-						fmt.Printf("git out | %s\n", scanner.Text())
+						fmt.Printf("%s\n", scanner.Text())
 					}
 				}()
 
@@ -131,7 +177,6 @@ func gitClone(c *cli.Context) error {
 				err = cmd.Wait()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error: waiting for Cmd", err)
-					// return err
 				}
 
 			} else {
