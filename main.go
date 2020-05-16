@@ -67,11 +67,11 @@ func main() {
 			Required: true,
 		},
 		cli.StringFlag{
-			Name:     GitOrg,
-			Value:    "",
-			Usage:    GitOrgUsage,
-			EnvVar:   GitOrgEnv,
-			Required: true,
+			Name:   GitOrg,
+			Value:  "",
+			Usage:  GitOrgUsage,
+			EnvVar: GitOrgEnv,
+			// Required: true,
 		},
 		cli.StringFlag{
 			Name:     GitToken,
