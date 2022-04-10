@@ -1,0 +1,89 @@
+before:
+  hooks:
+
+builds:
+  -
+    id: build
+    main: ./cmd/git-clone
+    binary: git-clone
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/gertd/git-clone/pkg/version.ver={{.Version}}
+      - -X github.com/gertd/git-clone/pkg/version.commit={{.ShortCommit}}
+      - -X github.com/gertd/git-clone/pkg/version.date={{.Date}}
+    mod_timestamp: '{{ .CommitTimestamp }}'
+
+archives:
+  - format: zip
+    replacements:
+      darwin: darwin
+      linux: linux
+      windows: windows
+      amd64: amd64
+    files:
+      - LICENSE
+      - README.md
+    name_template: "git-clone-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  github:
+    owner: gertd
+    name: git-clone
+
+  draft: false
+  prerelease: false
+  name_template: "git-clone {{.Tag}}"
+
+brews:
+  - name: git-clone
+
+    tap:
+      owner: gertd
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP }}"
+
+    url_template: "https://github.com/gertd/git-clone/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+    commit_author:
+      name: Gert Drapers
+      email: gert-bot@d5s.io
+
+    homepage: "https://github.com/gertd/git-clone"
+
+    description: "git-clone CLI"
+
+    license: "MIT"
+
+    skip_upload: false
+
+    test: |
+      system "#{bin}/git-clone version"
+
+    install: |
+      bin.install "git-clone"
