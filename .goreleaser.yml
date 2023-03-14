@@ -88,9 +88,7 @@ brews:
 
 publishers:
   - name: test
-    ids:
-      - build
     cmd: | 
-      print "oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} \
+      oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} \
         ghcr.io/aserto-dev/aserto-idp-plugins_{{ .Os }}_{{ .Arch }}:azuread-{{ .Tag }} \
-        {{ .ArtifactPath }}{{ .ArtifactName }} application/vnd.unknown.layer.v1+txt"
+        {{ .ArtifactPath }}{{ .ArtifactName }} application/vnd.unknown.layer.v1+txt
