@@ -88,8 +88,9 @@ brews:
 
 publishers:
   - name: test
+    dir: "{{ dir .ArtifactPath }}"
     cmd: | 
-      echo {{ .Env.DOCKER_PASSWORD }} | oras push -u {{ .Env.DOCKER_USERNAME }} --password-stdin \
+      oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} \
       ghcr.io/gertd/git-clone_{{ .Os }}_{{ .Arch }}:{{ .Tag }} \
       --artifact-type  application/vnd.unknown.layer.v1+txt \
-      {{ .Binary }}
+      build_{{ .Os }}_{{ .Arch }}/git-clone{{- if eq .Arch "windows" }}.exe{{ end }}
