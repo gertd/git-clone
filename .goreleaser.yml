@@ -90,4 +90,4 @@ publishers:
   - name: oras
     dir: "{{ dir .ArtifactPath }}"
     cmd: | 
-      echo {{ .Env.DOCKER_PASSWORD }} | oras push -u {{ .Env.DOCKER_USERNAME }} --password-stdin ghcr.io/gertd/git-clone_{{ .Os }}_{{ .Arch }}:{{ .Tag }} --artifact-type  application/vnd.unknown.layer.v1+txt build_{{ .Os }}_{{- if eq .Arch "amd64" }}amd64_v1{{- else }}{{ .Arch }}{{ end }}/git-clone{{- if eq .Os "windows" }}.exe{{ end }}
+      oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} ghcr.io/gertd/git-clone_{{ .Os }}_{{ .Arch }}:{{ .Tag }} --artifact-type  application/vnd.unknown.layer.v1+txt build_{{ .Os }}_{{- if eq .Arch "amd64" }}amd64_v1{{- else }}{{ .Arch }}{{ end }}/git-clone{{- if eq .Os "windows" }}.exe{{ end }}
