@@ -90,5 +90,5 @@ publishers:
   - name: test
     cmd: | 
       oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} \
-        ghcr.io/aserto-dev/aserto-idp-plugins_{{ .Os }}_{{ .Arch }}:azuread-{{ .Tag }} \
+        ghcr.io/gertd/git-clone_{{ .Os }}_{{ .Arch }}:{{ .Tag }} \
         {{ .ArtifactPath }}{{ .ArtifactName }} application/vnd.unknown.layer.v1+txt
