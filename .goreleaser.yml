@@ -28,15 +28,13 @@ builds:
 
 archives:
   - format: zip
-    replacements:
-      darwin: darwin
-      linux: linux
-      windows: windows
-      amd64: amd64
+    rlcp: true
     files:
       - LICENSE
       - README.md
-    name_template: "git-clone-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    name_template: >-
+      git-clone-{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}
+
 
 checksum:
   name_template: 'checksums.txt'
@@ -87,3 +85,12 @@ brews:
 
     install: |
       bin.install "git-clone"
+
+publishers:
+  - name: test
+    ids:
+      - build
+    cmd: | 
+      print "oras push -u {{ .Env.DOCKER_USERNAME }} -p {{ .Env.DOCKER_PASSWORD }} \
+        ghcr.io/aserto-dev/aserto-idp-plugins_{{ .Os }}_{{ .Arch }}:azuread-{{ .Tag }} \
+        {{ .ArtifactPath }}{{ .ArtifactName }} application/vnd.unknown.layer.v1+txt"

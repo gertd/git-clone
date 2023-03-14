@@ -12,9 +12,9 @@ all: deps gen build lint test
 
 deps:
 	@echo "$(WARN_COLOR)==> deps $(NO_COLOR)"
-	@go install gotest.tools/gotestsum@v1.7.0
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
-	@go install github.com/goreleaser/goreleaser@v1.6.3
+	@go install gotest.tools/gotestsum@v1.9.0
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.2
+	@go install github.com/goreleaser/goreleaser@v1.15.2
 
 gen:
 	@echo "$(ATTN_COLOR)==> generate$(NO_COLOR)"
@@ -22,7 +22,7 @@ gen:
 
 build:
 	@echo "$(WARN_COLOR)==> build $(NO_COLOR)"
-	@goreleaser build --single-target --snapshot --rm-dist
+	@goreleaser build --single-target --snapshot --clean
 
 clean: 
 	@echo "$(WARN_COLOR)==> clean $(NO_COLOR)"
@@ -38,4 +38,4 @@ test:
 
 release: 	
 	@echo "$(WARN_COLOR)==> release $(NO_COLOR)"
-	@goreleaser release --rm-dist
+	@goreleaser release --clean
